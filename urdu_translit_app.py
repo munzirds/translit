@@ -33,7 +33,7 @@ class Transliterator:
         with open(path, 'rb') as f:
             return pickle.load(f)
 
-    def transliterate(self, urdu_text, chunk_size=70, overlap=10):
+    def transliterate(self, urdu_text, chunk_size=70, overlap=1):
         if len(urdu_text) <= self.max_urdu_len:
             return self._transliterate_chunk(urdu_text)
     
