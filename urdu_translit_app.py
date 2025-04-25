@@ -69,10 +69,6 @@ def load_transliterators():
     )
 hindi_trans, roman_trans = load_transliterators()
 
-@st.cache_data
-def load_dataset():
-    return pd.read_csv('rekhta.csv')
-df = load_dataset()
 
 st.session_state.setdefault('urdu_text', "")
 
