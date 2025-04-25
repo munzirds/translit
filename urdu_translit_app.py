@@ -50,44 +50,44 @@ class Transliterator:
         return ''.join([self.target_idx_to_char.get(i, '') for i in output])
     '''
     def transliterate(self, urdu_text, chunk_size=80, overlap=10):
-    if len(urdu_text) <= self.max_urdu_len:
-        return self._transliterate_chunk(urdu_text)
-
-    words = urdu_text.split()
-    chunks = []
-    current_chunk = ""
-
-    for word in words:
-        # Check if adding this word would exceed the chunk size
-        if len(current_chunk) + len(word) + 1 <= chunk_size:
-            current_chunk += (" " if current_chunk else "") + word
-        else:
+        if len(urdu_text) <= self.max_urdu_len:
+            return self._transliterate_chunk(urdu_text)
+    
+        words = urdu_text.split()
+        chunks = []
+        current_chunk = ""
+    
+        for word in words:
+            # Check if adding this word would exceed the chunk size
+            if len(current_chunk) + len(word) + 1 <= chunk_size:
+                current_chunk += (" " if current_chunk else "") + word
+            else:
+                chunks.append(current_chunk)
+                current_chunk = word
+    
+        if current_chunk:
             chunks.append(current_chunk)
-            current_chunk = word
-
-    if current_chunk:
-        chunks.append(current_chunk)
-
-    # Add overlap by prepending the last few words from previous chunk
-    overlapped_chunks = []
-    for i, chunk in enumerate(chunks):
-        if i == 0:
-            overlapped_chunks.append(chunk)
-        else:
-            prev_words = chunks[i - 1].split()
-            overlap_words = prev_words[-overlap:] if len(prev_words) > overlap else prev_words
-            overlapped_chunks.append(" ".join(overlap_words) + " " + chunk)
-
-    transliterated_chunks = []
-    for i, chunk in enumerate(overlapped_chunks):
-        translit_chunk = self._transliterate_chunk(chunk)
-        if i > 0:
-            # Remove transliterated overlap at start of current chunk
-            overlap_translit = self._transliterate_chunk(" ".join(chunks[i - 1].split()[-overlap:]))
-            translit_chunk = translit_chunk[len(overlap_translit):]
-        transliterated_chunks.append(translit_chunk)
-
-    return ''.join(transliterated_chunks)
+    
+        # Add overlap by prepending the last few words from previous chunk
+        overlapped_chunks = []
+        for i, chunk in enumerate(chunks):
+            if i == 0:
+                overlapped_chunks.append(chunk)
+            else:
+                prev_words = chunks[i - 1].split()
+                overlap_words = prev_words[-overlap:] if len(prev_words) > overlap else prev_words
+                overlapped_chunks.append(" ".join(overlap_words) + " " + chunk)
+    
+        transliterated_chunks = []
+        for i, chunk in enumerate(overlapped_chunks):
+            translit_chunk = self._transliterate_chunk(chunk)
+            if i > 0:
+                # Remove transliterated overlap at start of current chunk
+                overlap_translit = self._transliterate_chunk(" ".join(chunks[i - 1].split()[-overlap:]))
+                translit_chunk = translit_chunk[len(overlap_translit):]
+            transliterated_chunks.append(translit_chunk)
+    
+        return ''.join(transliterated_chunks)
 
     
     def _encode_input(self, text):
