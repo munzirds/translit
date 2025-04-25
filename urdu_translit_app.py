@@ -9,7 +9,7 @@ from keras.saving import register_keras_serializable
 # Load models from Hugging Face (cached)
 @st.cache_resource
 def download_models():
-    snapshot_download("munzirahangar/translit", local_dir=".", token="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")
+    snapshot_download("munzirahangar/translit", local_dir=".")
 download_models()
 
 # Register masked loss
