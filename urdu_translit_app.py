@@ -32,7 +32,7 @@ class Transliterator:
     def _load_pickle(self, path):
         with open(path, 'rb') as f:
             return pickle.load(f)
-
+    '''
     def transliterate(self, urdu_text):
         encoder_input = self._encode_input(urdu_text)
         decoder_input = np.zeros((1, self.max_target_len + 1), dtype=np.int32)
@@ -48,7 +48,48 @@ class Transliterator:
             decoder_input[0, t + 1] = next_token
 
         return ''.join([self.target_idx_to_char.get(i, '') for i in output])
+    '''
+    def transliterate(self, urdu_text, chunk_size=80, overlap=10):
+    if len(urdu_text) <= self.max_urdu_len:
+        return self._transliterate_chunk(urdu_text)
 
+    words = urdu_text.split()
+    chunks = []
+    current_chunk = ""
+
+    for word in words:
+        # Check if adding this word would exceed the chunk size
+        if len(current_chunk) + len(word) + 1 <= chunk_size:
+            current_chunk += (" " if current_chunk else "") + word
+        else:
+            chunks.append(current_chunk)
+            current_chunk = word
+
+    if current_chunk:
+        chunks.append(current_chunk)
+
+    # Add overlap by prepending the last few words from previous chunk
+    overlapped_chunks = []
+    for i, chunk in enumerate(chunks):
+        if i == 0:
+            overlapped_chunks.append(chunk)
+        else:
+            prev_words = chunks[i - 1].split()
+            overlap_words = prev_words[-overlap:] if len(prev_words) > overlap else prev_words
+            overlapped_chunks.append(" ".join(overlap_words) + " " + chunk)
+
+    transliterated_chunks = []
+    for i, chunk in enumerate(overlapped_chunks):
+        translit_chunk = self._transliterate_chunk(chunk)
+        if i > 0:
+            # Remove transliterated overlap at start of current chunk
+            overlap_translit = self._transliterate_chunk(" ".join(chunks[i - 1].split()[-overlap:]))
+            translit_chunk = translit_chunk[len(overlap_translit):]
+        transliterated_chunks.append(translit_chunk)
+
+    return ''.join(transliterated_chunks)
+
+    
     def _encode_input(self, text):
         indices = [self.urdu_char_to_idx.get(c, 0) for c in text]
         return np.array([indices + [0] * (self.max_urdu_len - len(indices))])
