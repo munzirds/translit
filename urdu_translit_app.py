@@ -32,23 +32,7 @@ class Transliterator:
     def _load_pickle(self, path):
         with open(path, 'rb') as f:
             return pickle.load(f)
-    '''
-    def transliterate(self, urdu_text):
-        encoder_input = self._encode_input(urdu_text)
-        decoder_input = np.zeros((1, self.max_target_len + 1), dtype=np.int32)
-        decoder_input[0, 0] = self.target_char_to_idx['<SOS>']
-        output = []
 
-        for t in range(self.max_target_len):
-            preds = self.model.predict({'encoder_input': encoder_input, 'decoder_input': decoder_input}, verbose=0)
-            next_token = np.argmax(preds[0, t, :])
-            if next_token == self.target_char_to_idx['<EOS>']:
-                break
-            output.append(next_token)
-            decoder_input[0, t + 1] = next_token
-
-        return ''.join([self.target_idx_to_char.get(i, '') for i in output])
-    '''
     def transliterate(self, urdu_text, chunk_size=80, overlap=10):
         if len(urdu_text) <= self.max_urdu_len:
             return self._transliterate_chunk(urdu_text)
@@ -89,10 +73,26 @@ class Transliterator:
     
         return ''.join(transliterated_chunks)
 
-    
+    def _transliterate_chunk(self, chunk):
+        encoder_input = self._encode_input(chunk)
+        decoder_input = np.zeros((1, self.max_target_len + 1), dtype=np.int32)
+        decoder_input[0, 0] = self.target_char_to_idx['<SOS>']
+        output = []
+
+        for t in range(self.max_target_len):
+            preds = self.model.predict({'encoder_input': encoder_input, 'decoder_input': decoder_input}, verbose=0)
+            next_token = np.argmax(preds[0, t, :])
+            if next_token == self.target_char_to_idx['<EOS>']:
+                break
+            output.append(next_token)
+            decoder_input[0, t + 1] = next_token
+
+        return ''.join([self.target_idx_to_char.get(i, '') for i in output])
+
     def _encode_input(self, text):
         indices = [self.urdu_char_to_idx.get(c, 0) for c in text]
-        return np.array([indices + [0] * (self.max_urdu_len - len(indices))])
+        padded = indices + [0] * (self.max_urdu_len - len(indices))
+        return np.array([padded])
 
 @st.cache_resource
 def load_transliterators():
